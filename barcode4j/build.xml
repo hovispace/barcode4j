@@ -1,9 +1,14 @@
 <?xml version="1.0"?>
-<project default="all" basedir=".">
+<project xmlns:resolver="antlib:org.apache.maven.resolver.ant" default="all" basedir=".">
+  <taskdef uri="antlib:org.apache.maven.resolver.ant" resource="org/apache/maven/resolver/ant/antlib.xml">
+    <classpath>
+      <fileset dir="lib" includes="maven-resolver-ant-tasks-1.3.0-uber.jar"/>
+    </classpath>
+  </taskdef>
   <property file="build.properties"/>
   <property file="build-local.properties"/>
   <property environment="env"/>
-  
+
   <property name="Name" value="Barcode4J Library"/>
   <property name="name" value="barcode4j"/>
   <property name="version" value="${barcode4j-version}"/>
@@ -40,16 +45,16 @@
   <property name="jdom.dir" value="${src.dir}/jdom"/>
   <property name="checkstyle.home" value=""/>
   <property name="main.class" value="org.krysalis.barcode4j.cli.Main"/>
-  
+
   <!-- .NET support (using IKVM) -->
   <property name="ikvm.dir" value="."/>
   <property name="ikvmc" value="${ikvm.dir}/bin/ikvmc.exe"/>
-	
+
   <presetdef name="javac">
     <javac debug="${debug}" deprecation="${deprecation}" optimize="${optimize}"
       source="${javac.source}" target="${javac.target}" encoding="${encoding}"/>
   </presetdef>
-  
+
   <!-- jars -->
   <path id="project.classpath">
     <fileset dir="${lib.dir}">
@@ -85,7 +90,7 @@
     <tstamp>
       <format property="ts" pattern="yyyyMMdd-HHmmss-z"/>
     </tstamp>
-    
+
     <path id="bundle-util.classpath">
       <fileset dir="${lib.dir}/build-tools">
         <include name="**/*.jar"/>
@@ -94,7 +99,7 @@
     <taskdef resource="ch/jm/osgi/util/bundle/ant/antlib.xml"
       classpathref="bundle-util.classpath" onerror="fail"/>
   </target>
-  
+
   <target name="init" depends="pre-init">
     <available property="junit.present" classname="junit.framework.TestCase"
         classpathref="project.classpath"/>
@@ -277,7 +282,7 @@
   <target name="javadocs" depends="prepare" description="Generates Javadocs">
     <echo message="Creating java docs"/>
     <mkdir dir="${docs.dir}"/>
-    <javadoc destdir="${docs.dir}" packagenames="org.krysalis.*" 
+    <javadoc destdir="${docs.dir}" packagenames="org.krysalis.*"
           version="true" author="true" use="true"
           overview="${src.dir}/documentation/overview.html"
           windowtitle="${name} ${version} API"
@@ -304,7 +309,7 @@
   <!-- =================================================================== -->
   <target name="package-base" depends="compile-all">
     <echo message="Creating the jar file ${build.dir}/${name}.jar"/>
-    
+
     <jar jarfile="${build.dir}/${name}.jar">
       <manifest>
         <attribute name="Main-Class" value="${main.class}"/>
@@ -319,7 +324,7 @@
         <include name="org/krysalis/**"/>
       </fileset>
     </jar>
-    
+
     <jar jarfile="${build.dir}/${name}-light.jar">
       <manifest>
         <attribute name="Implementation-Title" value="${Name}"/>
@@ -357,7 +362,7 @@
       </fileset>
     </jar>
   </target>
-  
+
   <target name="osgi" depends="package-base">
     <echo message="Adding OSGi metadata..."/>
     <convert-jar-to-bundle file="${build.dir}/${name}-light.jar"
@@ -373,7 +378,7 @@
       <attribute name="Bundle-DocURL" value="${impl.url}"/>
     </convert-jar-to-bundle>
   </target>
-  
+
   <target name="package-fop-0.20.5" depends="compile-all">
     <echo message="Creating the jar file ${build.dir}/${name}-fop-ext-0.20.5.jar"/>
     <jar jarfile="${build.dir}/${name}-fop-ext-0.20.5.jar">
@@ -413,7 +418,7 @@
       </fileset>
     </jar>
   </target>
-  
+
   <target name="package-fop-trunk" depends="compile-all">
     <echo message="Creating the jar file ${build.dir}/${name}-fop-ext.jar"/>
     <jar jarfile="${build.dir}/${name}-fop-ext.jar">
@@ -478,7 +483,7 @@
       </metainf>
     </jar>
   </target>
-  
+
   <target name="package-xgc" depends="compile-all">
     <echo message="Creating the jar file ${build.dir}/${name}-xgc.jar"/>
     <jar jarfile="${build.dir}/${name}-xgc.jar">
@@ -511,16 +516,16 @@
       </metainf>
     </jar>
   </target>
-  
+
   <target name="package" depends="package-base, package-fop-0.20.5, package-fop-trunk, package-xgc, osgi, package.NET" description="Creates the Barcode JAR packages"/>
-  
+
   <!-- =================================================================== -->
   <!-- Creates .NET binaries using IKVM                                    -->
   <!-- =================================================================== -->
-  
+
   <macrodef name="ikvm-compile">
     <element name="args"/>
-    
+
     <sequential>
       <exec executable="${ikvmc}">
         <arg value="-exclude:ikvm-excludes.txt"/>
@@ -530,11 +535,11 @@
       </exec>
     </sequential>
   </macrodef>
-  
+
   <target name="package.NET" depends="package-base" if="IKVM.present" description="Generates the .NET DLL using IKVM">
     <property name="avalon.name" value="avalon-framework-4.2.0"/>
     <property name="cli.name" value="commons-cli-1.0"/>
-    
+
     <mkdir dir="${build.dotnet.dir}"/>
     <copy todir="${build.dotnet.dir}">
       <fileset dir="${ikvm.dir}/bin">
@@ -543,7 +548,7 @@
         <include name="IKVM.AWT*.dll"/>
       </fileset>
     </copy>
-    
+
     <echo message="=== Avalon DLL ==="/>
     <ikvm-compile>
       <args>
@@ -575,7 +580,7 @@
       </args>
     </ikvm-compile>
     <echo message="=== Barcode4J EXE ==="/>
-    
+
     <ikvm-compile>
       <args>
         <arg value="-reference:${build.dotnet.dir}\${name}-${version}.dll"/>
@@ -674,30 +679,30 @@
     <junit printsummary="yes" haltonfailure="yes">
       <!--jvmarg value="-verbose:class"/-->
       <sysproperty key="java.awt.headless" value="true"/>
-      <formatter type="brief" usefile="false"/> 
+      <formatter type="brief" usefile="false"/>
       <formatter type="xml" usefile="true"/>
       <classpath refid="test.classpath"/>
       <batchtest todir="${build.test}">
         <fileset dir="${build.test}/classes">
           <include name="**/*Test.class" />
-          <include name="**/*TestCase.class" />          
-          <exclude name="**/Abstract*.class" />          
-          <exclude name="**/XalanExtTest.class" />          
+          <include name="**/*TestCase.class" />
+          <exclude name="**/Abstract*.class" />
+          <exclude name="**/XalanExtTest.class" />
         </fileset>
       </batchtest>
-    </junit>  
+    </junit>
     <!-- Tests for external bugs separately without haltonfailure -->
     <junit printsummary="yes" haltonfailure="no" fork="yes">
       <!--jvmarg value="-verbose:class"/-->
       <sysproperty key="java.awt.headless" value="true"/>
-      <formatter type="brief" usefile="false"/> 
+      <formatter type="brief" usefile="false"/>
       <classpath refid="test.classpath"/>
       <batchtest todir="${build.test}">
         <fileset dir="${build.test}/classes">
           <include name="**/XalanExtTest.class" />
         </fileset>
       </batchtest>
-    </junit>  
+    </junit>
   </target>
   <!-- =================================================================== -->
   <!-- Default target                                                      -->
@@ -709,7 +714,7 @@
   <target name="clean" depends="init" description="Cleans and deletes the build directory">
     <delete dir="${build.dir}"/>
     <subant target="clean">
-      <dirset dir="${basedir}" includes="examples/demo-applet"/> 
+      <dirset dir="${basedir}" includes="examples/demo-applet"/>
     </subant>
   </target>
   <!-- =================================================================== -->
@@ -737,4 +742,35 @@
   <!-- Gump                                                                -->
   <!-- =================================================================== -->
   <target name="gump" depends="test, package, webapp, javadocs"/>
+
+  <resolver:authentication username="admin" password="admin" id="auth"/>
+
+  <resolver:remoterepo id="snapshot-repo" url="http://nexus.localhost/repository/maven-snapshots/"
+                       type="default" releases="false" snapshots="true" updates="always" checksums="fail">
+    <resolver:authentication refid="auth"/>
+  </resolver:remoterepo>
+
+  <resolver:remoterepo id="remote-repo" url="http://nexus.localhost/repository/maven-releases/">
+    <resolver:releases enabled="true" updates="daily" checksums="warn"/>
+    <resolver:snapshots enabled="false"/>
+    <resolver:authentication refid="auth"/>
+  </resolver:remoterepo>
+
+  <resolver:remoterepos id="all">
+    <resolver:remoterepo refid="snapshot-repo"/>
+    <resolver:remoterepo refid="remote-repo"/>
+  </resolver:remoterepos>
+
+  <resolver:artifacts id="producedArtifacts">
+    <resolver:artifact file="${build.dir}/barcode4j.jar"/>
+  </resolver:artifacts>
+
+  <resolver:pom file="${src.dir}/pom.xml" id="pom"/>
+
+  <target name="deploy">
+    <resolver:deploy artifactsref="producedArtifacts">
+      <resolver:remoterepo refid="remote-repo"/>
+      <resolver:snapshotrepo refid="snapshot-repo" />
+    </resolver:deploy>
+  </target>
 </project>
