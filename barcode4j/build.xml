@@ -765,7 +765,7 @@
     <resolver:artifact file="${build.dir}/barcode4j.jar"/>
   </resolver:artifacts>
 
-  <resolver:pom file="${src.dir}/pom.xml" id="pom"/>
+  <resolver:pom file="${basedir}/pom.xml" id="pom"/>
 
   <target name="deploy">
     <resolver:deploy artifactsref="producedArtifacts">
